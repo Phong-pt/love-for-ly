@@ -16,6 +16,7 @@
         d.style.transform = 'translateY(0)';
         d.style.transition = 'transform 2.2s linear, opacity 2.2s linear';
         d.style.opacity = '1';
+        d.style.pointerEvents = 'none';
         document.body.appendChild(d);
         requestAnimationFrame(() => {
           d.style.transform = 'translateY(110vh)';
