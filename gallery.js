@@ -107,12 +107,17 @@ els.load.addEventListener('click', async () => {
   const code = (els.code.value || '').trim();
   if (!cloud || !code) return alert('Nhập mã album');
   try {
+    els.status.textContent = 'Album: Đang tải...';
     const list = await cloud.list(code);
     showSlides(list);
     els.status.textContent = `Album: ${list.length} ảnh`;
-  } catch { 
+    if (list.length === 0) {
+      alert('Album trống. Hãy upload ảnh trước.');
+    }
+  } catch (err) { 
+    console.error('Load album error:', err);
     els.status.textContent = 'Album: Lỗi tải';
-    alert('Không tải được album');
+    alert('Không tải được album: ' + (err.message || 'Lỗi không xác định'));
   }
 });
 
