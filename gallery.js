@@ -1,6 +1,7 @@
 const els = {
   status: document.getElementById('album-status'),
   code: document.getElementById('album-code'),
+  load: document.getElementById('album-load'),
   pass: document.getElementById('album-pass'),
   file: document.getElementById('album-file'),
   upload: document.getElementById('album-upload'),
@@ -75,11 +76,25 @@ els.file.addEventListener('change', async () => {
   } catch { alert('Upload thất bại'); }
 });
 
-els.code.addEventListener('change', async () => {
+// Load album button
+els.load.addEventListener('click', async () => {
   const code = (els.code.value || '').trim();
-  if (!cloud || !code) return;
-  const list = await cloud.list(code);
-  showSlides(list);
+  if (!cloud || !code) return alert('Nhập mã album');
+  try {
+    const list = await cloud.list(code);
+    showSlides(list);
+    els.status.textContent = `Album: ${list.length} ảnh`;
+  } catch { 
+    els.status.textContent = 'Album: Lỗi tải';
+    alert('Không tải được album');
+  }
+});
+
+// Auto-load on Enter key
+els.code.addEventListener('keydown', async (e) => {
+  if (e.key === 'Enter') {
+    els.load.click();
+  }
 });
 
 function fileToDataUrl(file) {
