@@ -1,5 +1,5 @@
 // Entry point
-const START_DATE = new Date(2023, 10, 20); // month is 0-based (11 = Nov). Provided example uses 2023-11-20
+const START_DATE = new Date(2020, 5, 28, 0, 0, 0); // 28/06/2020 (month 5 = June)
 
 const els = {
   typing: document.getElementById('intro-typing'),
@@ -10,6 +10,16 @@ const els = {
   motd: document.getElementById('motd'),
   timeline: document.getElementById('timeline'),
   form: document.getElementById('memory-form'),
+  addMemoryBtn: document.getElementById('add-memory-btn'),
+  memoryPanel: document.getElementById('memory-panel'),
+  memoryCancel: document.getElementById('memory-cancel'),
+  openDiary: document.getElementById('open-diary'),
+  diaryModal: document.getElementById('diary-modal'),
+  diaryEditor: document.getElementById('diary-editor'),
+  diaryPassword: document.getElementById('diary-password'),
+  diaryUnlock: document.getElementById('diary-unlock'),
+  diaryLock: document.getElementById('diary-lock'),
+  diaryClose: document.getElementById('diary-close'),
   formDate: document.getElementById('mem-date'),
   formTitle: document.getElementById('mem-title'),
   formPhoto: /** @type {HTMLInputElement} */ (document.getElementById('mem-photo')),
@@ -72,12 +82,15 @@ els.themeToggle?.addEventListener('click', () => {
 function updateTimer() {
   const now = new Date();
   const diffMs = now.getTime() - START_DATE.getTime();
-  const minutes = Math.floor(diffMs / 60000);
-  const days = Math.floor(minutes / (60 * 24));
-  const hours = Math.floor((minutes - days * 24 * 60) / 60);
-  const mins = minutes % 60;
-  els.timer.textContent = `Chúng ta đã bên nhau được ${days} ngày ${hours} giờ ${mins} phút 💞`;
-  if (mins === 0 && hours === 0) pulseTitle();
+  const seconds = Math.floor(diffMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  const remHours = hours % 24;
+  const remMins = minutes % 60;
+  const remSecs = seconds % 60;
+  els.timer.textContent = `Chúng ta đã bên nhau được ${days} ngày ${remHours} giờ ${remMins} phút ${remSecs} giây 💞`;
+  if (remSecs === 0 && remMins === 0 && remHours === 0) pulseTitle();
 }
 function pulseTitle() {
   const node = document.querySelector('.title .sparkle');
@@ -101,6 +114,7 @@ function updateMotd() {
 
 // 6) Timeline with localStorage
 const STORAGE_KEY = 'love-for-ly:timeline';
+const DIARY_KEY = 'love-for-ly:diary';
 let cloud = null; // will hold Firebase helpers if available
 /** @typedef {{ id:string; date:string; title:string; desc:string; photoData?:string }} Memory */
 /** @returns {Memory[]} */
@@ -281,10 +295,17 @@ function showToast(message) {
 
 // 7) Chatbot (rule-based)
 const rules = [
-  { q: /anh yêu em/i, a: 'Anh yêu em hơn cả thế giới này 💕' },
-  { q: /hôm nay.*buồn/i, a: 'Đừng buồn nữa nhé, có anh ở đây 🥺' },
-  { q: /nhớ em/i, a: 'Anh nhớ em nhiều lắm, Ly ơi 💞' },
-  { q: /xin chào|hello|hi/i, a: 'Chào em yêu ✨' },
+  { q: /(ai viết bot|ai tạo bot|bot.*ai làm)/i, a: 'Phạm Thế Phong tự tay viết tặng Vũ Hoàng Ly 💖' },
+  { q: /(bạn yêu ai|bot yêu ai|yêu ai nhất)/i, a: 'Trái tim này thuộc về Vũ Hoàng Ly mãi mãi 💘' },
+  { q: /(anh có yêu em không|anh yêu em không|anh có yêu ly không)/i, a: 'Anh yêu em hơn cả thế giới này 💕' },
+  { q: /(em có yêu anh không|em có yêu ảnh không)/i, a: 'Em yêu anh chứ! Vì anh luôn dịu dàng và chân thành ✨' },
+  { q: /(hôm nay.*buồn|em buồn|mệt quá)/i, a: 'Đừng buồn nữa nhé, có anh ở đây ôm em nè 🥺💗' },
+  { q: /(nhớ em|anh nhớ em|nhơ em)/i, a: 'Anh nhớ em nhiều lắm, Ly ơi 💞' },
+  { q: /(nhớ anh|em nhớ anh)/i, a: 'Anh ở đây nè, lúc nào cũng cạnh em 🤗' },
+  { q: /(chúc ngủ ngon|ngủ ngon)/i, a: 'Ngủ thật ngon nhé cô gái của anh 🌙💤' },
+  { q: /(chúc buổi sáng|buổi sáng vui vẻ|good morning)/i, a: 'Buổi sáng hồng như má em! Chúc em một ngày dịu dàng 🌷' },
+  { q: /(xin chào|hello|hi|chào)/i, a: 'Chào em yêu ✨ Anh đây!' },
+  { q: /(yêu|love)/i, a: 'Yêu em ngập tràn, như hoa ly nở rộ 💐' },
 ];
 function reply(text) {
   for (const r of rules) if (r.q.test(text)) return r.a;
@@ -410,7 +431,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   typeText(els.typing, introText, 26);
   updateMotd();
   updateTimer();
-  setInterval(updateTimer, 1000 * 30);
+  setInterval(updateTimer, 1000);
   renderTimeline();
   maybeSpecial();
   initThreeLily();
@@ -431,6 +452,50 @@ window.addEventListener('DOMContentLoaded', async () => {
       showToast('Đã tải lại từ cloud');
     });
   }
+  // Toggle add memory panel
+  els.addMemoryBtn?.addEventListener('click', () => els.memoryPanel?.classList.toggle('hidden'));
+  els.memoryCancel?.addEventListener('click', () => els.memoryPanel?.classList.add('hidden'));
+
+  // Diary modal toggle
+  els.openDiary?.addEventListener('click', () => els.diaryModal?.classList.remove('hidden'));
+  els.diaryClose?.addEventListener('click', () => els.diaryModal?.classList.add('hidden'));
+  els.diaryUnlock?.addEventListener('click', async () => {
+    const pass = els.diaryPassword.value;
+    const enc = localStorage.getItem(DIARY_KEY);
+    if (!enc) { els.diaryEditor.value = ''; showToast('Chưa có nhật ký.'); return; }
+    try { els.diaryEditor.value = await decryptDiary(enc, pass); showToast('Đã mở nhật ký'); }
+    catch { showToast('Mật khẩu sai hoặc dữ liệu hỏng'); }
+  });
+  els.diaryLock?.addEventListener('click', async () => {
+    const pass = els.diaryPassword.value;
+    if (!pass) { showToast('Nhập mật khẩu để khóa'); return; }
+    const text = els.diaryEditor.value;
+    const enc = await encryptDiary(text, pass);
+    localStorage.setItem(DIARY_KEY, enc);
+    showToast('Đã khóa & lưu nhật ký');
+  });
 });
+
+// Diary crypto using AES-GCM
+async function encryptDiary(plainText, password) {
+  const enc = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
+  const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plainText));
+  const out = new Uint8Array(salt.length + iv.length + cipher.byteLength);
+  out.set(salt, 0); out.set(iv, salt.length); out.set(new Uint8Array(cipher), salt.length + iv.length);
+  return btoa(String.fromCharCode(...out));
+}
+async function decryptDiary(b64, password) {
+  const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const salt = bin.slice(0,16); const iv = bin.slice(16, 28); const data = bin.slice(28);
+  const enc = new TextEncoder(); const dec = new TextDecoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+  return dec.decode(plain);
+}
 
 

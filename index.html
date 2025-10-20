@@ -50,29 +50,53 @@
                 <h2 class="section-title">Nhật ký tình yêu</h2>
                 <div id="timeline" class="timeline"></div>
 
-                <details class="add-memory">
-                    <summary>Thêm kỷ niệm mới</summary>
-                    <form id="memory-form">
-                        <div class="form-row">
-                            <label>Ngày</label>
-                            <input type="date" id="mem-date" required />
-                        </div>
-                        <div class="form-row">
-                            <label>Tiêu đề</label>
-                            <input type="text" id="mem-title" placeholder="Tiêu đề kỷ niệm" required />
-                        </div>
-                        <div class="form-row">
-                            <label>Ảnh</label>
-                            <input type="file" id="mem-photo" accept="image/*" />
-                        </div>
-                        <div class="form-row">
-                            <label>Mô tả</label>
-                            <textarea id="mem-desc" rows="3" placeholder="Mô tả ngắn"></textarea>
-                        </div>
-                        <button class="btn" type="submit">Lưu kỷ niệm</button>
-                    </form>
-                </details>
+                <div class="add-memory">
+                    <button id="add-memory-btn" class="btn" type="button">Thêm kỷ niệm mới</button>
+                    <div id="memory-panel" class="memory-panel hidden">
+                        <form id="memory-form">
+                            <div class="form-row">
+                                <label>Ngày</label>
+                                <input type="date" id="mem-date" required />
+                            </div>
+                            <div class="form-row">
+                                <label>Tiêu đề</label>
+                                <input type="text" id="mem-title" placeholder="Tiêu đề kỷ niệm" required />
+                            </div>
+                            <div class="form-row">
+                                <label>Ảnh</label>
+                                <input type="file" id="mem-photo" accept="image/*" />
+                            </div>
+                            <div class="form-row">
+                                <label>Mô tả</label>
+                                <textarea id="mem-desc" rows="3" placeholder="Mô tả ngắn"></textarea>
+                            </div>
+                            <div style="display:flex; gap:8px;">
+                                <button class="btn" type="submit">Lưu kỷ niệm</button>
+                                <button id="memory-cancel" class="btn" type="button">Đóng</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="add-diary">
+                    <button id="open-diary" class="btn" type="button">Nhật ký hằng ngày</button>
+                </div>
             </section>
+
+            <div id="diary-modal" class="diary-modal hidden" role="dialog" aria-modal="true">
+                <div class="diary-sheet">
+                    <div class="diary-header">
+                        <strong>Trang nhật ký</strong>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <input id="diary-password" type="password" placeholder="Mật khẩu" />
+                            <button id="diary-unlock" class="btn" type="button">Mở khóa</button>
+                            <button id="diary-lock" class="btn" type="button">Khóa & Lưu</button>
+                            <button id="diary-close" class="btn" type="button">Đóng</button>
+                        </div>
+                    </div>
+                    <textarea id="diary-editor" class="diary-editor" placeholder="Viết cảm nghĩ của anh dành cho Ly..."></textarea>
+                </div>
+            </div>
         </main>
 
         <div id="chatbot" class="chatbot">

@@ -65,8 +65,14 @@ body {
 .memory-media { grid-column: 1 / -1; }
 .memory-item:hover { outline: 2px solid rgba(255,51,102,0.3); box-shadow: 0 10px 24px rgba(255, 51, 102, 0.25); }
 
-.add-memory { margin-top: 16px; }
-.add-memory summary { cursor: pointer; }
+.add-memory { margin-top: 16px; display: grid; gap: 10px; }
+.memory-panel { background: rgba(255,255,255,0.7); border-radius: 12px; padding: 12px; box-shadow: 0 8px 20px var(--shadow); }
+.add-diary { margin-top: 10px; }
+.diary-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.3); display: grid; place-items: center; z-index: 70; }
+.diary-sheet { width: min(800px, 92vw); background: #fffdf7; border-radius: 14px; padding: 12px; box-shadow: 0 16px 38px rgba(0,0,0,0.25); border: 1px solid #ffe3ea; }
+.diary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.diary-header input { padding: 8px 10px; border-radius: 10px; border: 1px solid #ffd1dc; }
+.diary-editor { width: 100%; height: 300px; padding: 12px; border: 1px dashed #ffd1dc; border-radius: 12px; background: repeating-linear-gradient(#fffdf7, #fffdf7 28px, #fff3f6 30px); font-family: 'Dancing Script', 'Satisfy', serif; font-size: 20px; color: var(--text); }
 .form-row { display: grid; gap: 6px; margin: 8px 0; }
 .form-row input, .form-row textarea { padding: 10px 12px; border-radius: 10px; border: 1px solid #ffd1dc; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
 
