@@ -476,6 +476,28 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
+// Fallback event delegation in case elements were not present at bind time (e.g., cached HTML)
+document.addEventListener('click', (e) => {
+  const t = /** @type {HTMLElement} */ (e.target);
+  if (!t) return;
+  if (t.id === 'add-memory-btn') {
+    const panel = document.getElementById('memory-panel');
+    panel && panel.classList.toggle('hidden');
+  }
+  if (t.id === 'memory-cancel') {
+    const panel = document.getElementById('memory-panel');
+    panel && panel.classList.add('hidden');
+  }
+  if (t.id === 'open-diary') {
+    const modal = document.getElementById('diary-modal');
+    modal && modal.classList.remove('hidden');
+  }
+  if (t.id === 'diary-close') {
+    const modal = document.getElementById('diary-modal');
+    modal && modal.classList.add('hidden');
+  }
+});
+
 // Diary crypto using AES-GCM
 async function encryptDiary(plainText, password) {
   const enc = new TextEncoder();
