@@ -21,6 +21,7 @@ const els = {
   chatInput: document.getElementById('chat-input'),
   heartLayer: document.getElementById('heart-layer'),
   cloudStatus: document.getElementById('cloud-status'),
+  cloudReload: document.getElementById('cloud-reload'),
   specialPopup: document.getElementById('special-popup'),
   specialText: document.getElementById('special-text'),
   specialClose: document.getElementById('special-close'),
@@ -166,12 +167,11 @@ async function renderTimeline() {
   if (cloud) {
     try {
       const cloudItems = await cloud.listMemories();
-      // merge cloud and local (cloud wins for dedup based on title+date)
-      const map = new Map();
-      for (const m of cloudItems) map.set(`${m.date}|${m.title}`, { ...m, photoData: m.photoUrl });
-      for (const m of localData) if (!map.has(`${m.date}|${m.title}`)) map.set(`${m.date}|${m.title}`, m);
-      data = Array.from(map.values());
-    } catch {}
+      // Prefer cloud completely if available
+      data = cloudItems.map(m => ({ id: m.id, date: m.date, title: m.title, desc: m.desc, photoData: m.photoUrl || '' }));
+    } catch (e) {
+      console.warn('Cloud fetch failed, using local data', e);
+    }
   }
   data = data.sort((a,b) => (a.date > b.date ? -1 : 1));
   els.timeline.innerHTML = '';
@@ -414,6 +414,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   renderTimeline();
   maybeSpecial();
   initThreeLily();
+  els.cloudReload?.addEventListener('click', () => renderTimeline());
 });
 
 
