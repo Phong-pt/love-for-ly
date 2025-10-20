@@ -228,11 +228,10 @@ function maybeSpecial() {
   else if (lyBirthday) text = 'Chúc mừng sinh nhật em yêu 🎂✨';
   if (text) {
     try { if (window.confettiBurst) window.confettiBurst(); } catch {}
-    els.specialText.textContent = text;
-    els.specialPopup.removeAttribute('hidden');
+    // Popup đã được loại bỏ: chỉ hiển thị confetti, không mở hộp thoại
   }
 }
-els.specialClose?.addEventListener('click', () => els.specialPopup.setAttribute('hidden', ''));
+// Popup đã bỏ, không cần handler đóng
 
 // 10) Three.js lily (deferred, graceful fallback)
 async function initThreeLily() {

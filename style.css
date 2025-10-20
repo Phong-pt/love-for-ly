@@ -84,8 +84,7 @@ body {
 .heart-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 10; }
 .heart { position: absolute; color: var(--hot-red); opacity: 0.9; transform: translate(-50%, -50%); animation: floatUp 1.4s ease-out forwards; }
 
-.special-popup { position: fixed; inset: 0; background: rgba(0,0,0,0.3); display: grid; place-items: center; z-index: 60; }
-.popup-card { background: #fff; padding: 16px 18px; border-radius: 14px; max-width: 420px; text-align: center; box-shadow: 0 14px 36px rgba(0,0,0,0.2); }
+/* removed special popup */
 
 /* Night mode */
 body.night {
