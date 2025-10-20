@@ -291,6 +291,10 @@ titleSpan?.addEventListener('mouseleave', () => { titleSpan.style.textShadow = '
 
 // 12) Init all
 window.addEventListener('DOMContentLoaded', async () => {
+  // Force-remove legacy special popup if any cached markup still exists
+  const legacyPopup = document.getElementById('special-popup');
+  if (legacyPopup) legacyPopup.remove();
+
   applyDayNightByTime();
   typeText(els.typing, introText, 26);
   updateMotd();
