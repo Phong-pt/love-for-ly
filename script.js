@@ -507,8 +507,21 @@ window.addEventListener('DOMContentLoaded', async () => {
       showToast('Đã tải lại từ cloud');
     });
   }
-  // Toggle add memory panel
-  els.addMemoryBtn?.addEventListener('click', () => els.memoryPanel?.classList.toggle('hidden'));
+  // Toggle add memory panel (robust open)
+  els.addMemoryBtn?.addEventListener('click', () => {
+    if (!els.memoryPanel) return;
+    const willOpen = els.memoryPanel.classList.contains('hidden');
+    els.memoryPanel.classList.toggle('hidden');
+    if (willOpen) {
+      // prefill date today and focus title
+      try { if (els.formDate) els.formDate.valueAsDate = new Date(); } catch {}
+      setTimeout(() => els.formTitle?.focus(), 0);
+      els.addMemoryBtn.setAttribute('aria-expanded', 'true');
+      els.memoryPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      els.addMemoryBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
   els.memoryCancel?.addEventListener('click', () => els.memoryPanel?.classList.add('hidden'));
 
   // Diary modal toggle
@@ -601,7 +614,14 @@ document.addEventListener('click', (e) => {
   if (!t) return;
   if (t.id === 'add-memory-btn') {
     const panel = document.getElementById('memory-panel');
-    panel && panel.classList.toggle('hidden');
+    if (panel) {
+      const hidden = panel.classList.contains('hidden');
+      panel.classList.toggle('hidden');
+      if (hidden) {
+        try { const d = document.getElementById('mem-date'); d && (d.valueAsDate = new Date()); } catch {}
+        const title = document.getElementById('mem-title'); title && title.focus();
+      }
+    }
   }
   if (t.id === 'memory-cancel') {
     const panel = document.getElementById('memory-panel');
