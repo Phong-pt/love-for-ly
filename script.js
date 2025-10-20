@@ -59,9 +59,23 @@ async function typeText(el, text, speed = 26) {
 let musicEnabled = false;
 els.musicToggle?.addEventListener('click', async () => {
   if (!musicEnabled) {
-    try { await els.music.play(); musicEnabled = true; els.musicToggle.textContent = 'Tắt nhạc'; }
-    catch { /* autoplay blocked */ }
-  } else { els.music.pause(); musicEnabled = false; els.musicToggle.textContent = 'Bật nhạc'; }
+    try { 
+      els.music.load(); // force reload audio
+      await els.music.play(); 
+      musicEnabled = true; 
+      els.musicToggle.textContent = 'Tắt nhạc';
+      showToast('Nhạc đã bật 🎵');
+    }
+    catch (err) { 
+      console.error('Music play error:', err);
+      showToast('Không thể phát nhạc. Thử bấm lại.');
+    }
+  } else { 
+    els.music.pause(); 
+    musicEnabled = false; 
+    els.musicToggle.textContent = 'Bật nhạc';
+    showToast('Nhạc đã tắt 🔇');
+  }
 });
 
 // 3) Day/Night auto and manual toggle
