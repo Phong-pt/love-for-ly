@@ -522,6 +522,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       els.addMemoryBtn.setAttribute('aria-expanded', 'false');
     }
   });
+  // mark bound to avoid duplicate delegation toggles
+  window.__bindAddMemory = true;
   els.memoryCancel?.addEventListener('click', () => els.memoryPanel?.classList.add('hidden'));
 
   // Diary modal toggle
@@ -612,7 +614,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 document.addEventListener('click', (e) => {
   const t = /** @type {HTMLElement} */ (e.target);
   if (!t) return;
-  if (t.id === 'add-memory-btn') {
+  if (t.id === 'add-memory-btn' && !window.__bindAddMemory) {
     const panel = document.getElementById('memory-panel');
     if (panel) {
       const hidden = panel.classList.contains('hidden');
