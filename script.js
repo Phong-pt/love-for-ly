@@ -8,6 +8,7 @@ const els = {
   themeToggle: document.getElementById('theme-toggle'),
   timer: document.getElementById('love-timer'),
   motd: document.getElementById('motd'),
+  quotes: document.getElementById('quotes'),
   timeline: document.getElementById('timeline'),
   form: document.getElementById('memory-form'),
   addMemoryBtn: document.getElementById('add-memory-btn'),
@@ -115,6 +116,21 @@ function updateMotd() {
   const dayIndex = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
   const pick = messages[dayIndex % messages.length];
   els.motd.textContent = pick;
+}
+const loveQuotes = [
+  'Yêu em là điều dịu dàng nhất anh làm mỗi ngày 💗',
+  'Bên em, mọi khoảnh khắc đều hóa kỷ niệm ✨',
+  'Tim anh đập theo nhịp cười của em 💓',
+  'Em là bài hát anh muốn nghe cả đời 🎵',
+];
+function rotateQuotes() {
+  let i = Math.floor(Math.random() * loveQuotes.length);
+  const show = () => {
+    els.quotes.textContent = '“' + loveQuotes[i] + '”';
+    i = (i + 1) % loveQuotes.length;
+  };
+  show();
+  setInterval(show, 6000);
 }
 
 // 6) Timeline with localStorage
@@ -229,11 +245,19 @@ async function renderTimeline() {
     if (m.photoData) {
       const mediaWrap = document.createElement('div');
       mediaWrap.className = 'memory-media';
+      const frame = document.createElement('div');
+      frame.style.display = 'inline-block';
+      frame.style.transform = `rotate(${(Math.random()*6-3).toFixed(1)}deg)`;
       const img = document.createElement('img');
-      img.className = 'memory-photo';
+      img.className = 'memory-photo polaroid';
       img.src = m.photoData;
       img.alt = m.title;
-      mediaWrap.appendChild(img);
+      frame.appendChild(img);
+      const cap = document.createElement('div');
+      cap.className = 'polaroid-caption';
+      cap.textContent = m.title;
+      frame.appendChild(cap);
+      mediaWrap.appendChild(frame);
       item.appendChild(mediaWrap);
     }
     item.addEventListener('mouseenter', () => item.animate([{ boxShadow: '0 6px 16px rgba(0,0,0,0.1)' }, { boxShadow: '0 12px 28px rgba(255,51,102,0.25)' }], { duration: 300, fill: 'forwards' }));
@@ -452,6 +476,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   updateTimer();
   setInterval(updateTimer, 1000);
   renderTimeline();
+  rotateQuotes();
   maybeSpecial();
   initThreeLily();
   els.cloudReload?.addEventListener('click', () => renderTimeline());
@@ -538,6 +563,37 @@ window.addEventListener('DOMContentLoaded', async () => {
     } catch { showToast('Không tải được danh sách'); }
   });
 });
+
+// Fireflies canvas (night mood + subtle in day)
+(() => {
+  const canvas = document.getElementById('fireflies');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let w = canvas.width = innerWidth, h = canvas.height = innerHeight;
+  let t = 0;
+  const bugs = Array.from({ length: 30 }, () => ({
+    x: Math.random()*w, y: Math.random()*h, r: 1+Math.random()*2, a: Math.random()*Math.PI*2, s: 0.6+Math.random()*0.8
+  }));
+  function draw() {
+    ctx.clearRect(0,0,w,h);
+    for (const b of bugs) {
+      b.a += (Math.random()-0.5)*0.2; b.x += Math.cos(b.a)*b.s; b.y += Math.sin(b.a)*b.s;
+      if (b.x<0) b.x=w; if (b.x>w) b.x=0; if (b.y<0) b.y=h; if (b.y>h) b.y=0;
+      const glow = 0.5 + 0.5*Math.sin(t*0.05 + b.a);
+      ctx.beginPath();
+      const g = ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,10);
+      g.addColorStop(0, `rgba(255,255,200,${0.9*glow})`);
+      g.addColorStop(1, 'rgba(255,255,200,0)');
+      ctx.fillStyle = g;
+      ctx.arc(b.x,b.y,10,0,Math.PI*2);
+      ctx.fill();
+    }
+    t++;
+    requestAnimationFrame(draw);
+  }
+  draw();
+  addEventListener('resize', () => { w = canvas.width = innerWidth; h = canvas.height = innerHeight; });
+})();
 
 // Fallback event delegation in case elements were not present at bind time (e.g., cached HTML)
 document.addEventListener('click', (e) => {
