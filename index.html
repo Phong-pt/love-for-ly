@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Love for Ly — by Phong</title>
+    <meta name="description" content="Website Phạm Thế Phong tặng Vũ Hoàng Ly">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Great+Vibes&family=Satisfy&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <audio id="bg-music" src="assets/music.mp3" loop preload="auto"></audio>
+
+    <div id="root" class="app">
+        <header class="hero">
+            <h1 class="title">
+                <span class="sparkle">Vũ Hoàng Ly</span>
+            </h1>
+            <p id="intro-typing" class="intro"></p>
+            <div class="controls">
+                <button id="music-toggle" class="btn">Bật nhạc</button>
+                <button id="theme-toggle" class="btn">Chế độ Ngày/Đêm</button>
+            </div>
+        </header>
+
+        <main>
+            <section class="stage" aria-label="Hoa Ly 3D">
+                <canvas id="three-canvas" class="three-canvas"></canvas>
+                <div id="three-fallback" class="three-fallback" hidden>
+                    <div class="lily-illus" aria-hidden="true">🌸</div>
+                    <p>Thiết bị không hỗ trợ 3D. Đây là phiên bản minh họa.</p>
+                </div>
+            </section>
+
+            <section class="timer-section">
+                <h2 class="section-title">Love Timer</h2>
+                <p id="love-timer" class="timer">Chúng ta đã bên nhau được …</p>
+            </section>
+
+            <section class="motd-section">
+                <h2 class="section-title">Lời nhắn hôm nay</h2>
+                <p id="motd" class="motd"></p>
+            </section>
+
+            <section class="timeline-section">
+                <h2 class="section-title">Nhật ký tình yêu</h2>
+                <div id="timeline" class="timeline"></div>
+
+                <details class="add-memory">
+                    <summary>Thêm kỷ niệm mới</summary>
+                    <form id="memory-form">
+                        <div class="form-row">
+                            <label>Ngày</label>
+                            <input type="date" id="mem-date" required />
+                        </div>
+                        <div class="form-row">
+                            <label>Tiêu đề</label>
+                            <input type="text" id="mem-title" placeholder="Tiêu đề kỷ niệm" required />
+                        </div>
+                        <div class="form-row">
+                            <label>Ảnh</label>
+                            <input type="file" id="mem-photo" accept="image/*" />
+                        </div>
+                        <div class="form-row">
+                            <label>Mô tả</label>
+                            <textarea id="mem-desc" rows="3" placeholder="Mô tả ngắn"></textarea>
+                        </div>
+                        <button class="btn" type="submit">Lưu kỷ niệm</button>
+                    </form>
+                </details>
+            </section>
+        </main>
+
+        <div id="chatbot" class="chatbot">
+            <button id="chat-toggle" class="chat-bubble" aria-label="Mở chatbot">💬</button>
+            <div id="chat-panel" class="chat-panel" hidden>
+                <div class="chat-header">Phong Bot</div>
+                <div id="chat-log" class="chat-log"></div>
+                <form id="chat-form" class="chat-form">
+                    <input id="chat-input" type="text" placeholder="Nhập câu hỏi…" autocomplete="off" />
+                    <button class="btn" type="submit">Gửi</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="heart-layer" class="heart-layer" aria-hidden="true"></div>
+
+        <div id="special-popup" class="special-popup" hidden>
+            <div class="popup-card">
+                <p id="special-text"></p>
+                <button id="special-close" class="btn">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/confetti.js"></script>
+    <script src="script.js" type="module"></script>
+    <noscript>Trình duyệt cần bật JavaScript để hiển thị đầy đủ hiệu ứng 💖</noscript>
+</body>
+</html>
+
