@@ -62,18 +62,38 @@ els.file.addEventListener('change', async () => {
   if (!code) return alert('Nhập Mã album');
   const pass = els.pass.value;
   if (pass !== (localStorage.getItem('album-pass-'+code) || pass)) {
-    // lần đầu lưu pass vào local để không hỏi lại trong phiên (chỉ trên máy up)
     localStorage.setItem('album-pass-'+code, pass);
   }
   if (!pass) return alert('Nhập mật khẩu upload');
   const f = els.file.files[0]; if (!f) return;
+  
+  els.upload.textContent = 'Đang upload...';
+  els.upload.disabled = true;
+  
   try {
+    // Step 1: Upload to Cloudinary
+    els.status.textContent = 'Album: Đang upload ảnh...';
     const url = await cloud.uploadToCloudinary(f);
+    
+    // Step 2: Save to Firestore
+    els.status.textContent = 'Album: Đang lưu thông tin...';
     await cloud.add({ code, url });
-    alert('Đã tải lên');
+    
+    // Step 3: Reload album
+    els.status.textContent = 'Album: Đang tải lại...';
     const list = await cloud.list(code);
     showSlides(list);
-  } catch { alert('Upload thất bại'); }
+    
+    alert('Upload thành công!');
+    els.status.textContent = `Album: ${list.length} ảnh`;
+  } catch (err) {
+    console.error('Upload error:', err);
+    alert('Upload thất bại: ' + (err.message || 'Lỗi không xác định'));
+    els.status.textContent = 'Album: Upload thất bại';
+  } finally {
+    els.upload.textContent = 'Upload ảnh';
+    els.upload.disabled = false;
+  }
 });
 
 // Load album button
