@@ -504,10 +504,15 @@ window.addEventListener('DOMContentLoaded', async () => {
     localStorage.setItem(DIARY_KEY, enc);
     showToast('Đã khóa & lưu nhật ký');
     // Optional cloud save: need code and date
-    if (cloud && els.diaryCode.value) {
-      const date = els.diaryDate.value || new Date().toISOString().slice(0,10);
-      try { await cloud.addDiary({ code: els.diaryCode.value.trim(), date, cipher: enc }); showToast('Đã đồng bộ nhật ký'); } catch {}
+    if (!cloud) {
+      showToast('Chưa bật cloud — chỉ lưu trên máy này');
+      return;
     }
+    const code = (els.diaryCode.value || '').trim();
+    if (!code) { showToast('Nhập Mã nhật ký để đồng bộ lên cloud'); return; }
+    const date = els.diaryDate.value || new Date().toISOString().slice(0,10);
+    try { await cloud.addDiary({ code, date, cipher: enc }); showToast('Đã đồng bộ nhật ký'); }
+    catch { showToast('Không đồng bộ được lên cloud'); }
   });
   // Load diary list by code
   els.diaryLoadList?.addEventListener('click', async () => {
