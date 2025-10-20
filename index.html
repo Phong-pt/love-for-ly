@@ -88,6 +88,8 @@
                     <div class="diary-header">
                         <strong>Trang nhật ký</strong>
                         <div style="display:flex; gap:8px; align-items:center;">
+                            <input id="diary-code" type="text" placeholder="Mã nhật ký" />
+                            <input id="diary-date" type="date" />
                             <input id="diary-password" type="password" placeholder="Mật khẩu" />
                             <button id="diary-unlock" class="btn" type="button">Mở khóa</button>
                             <button id="diary-lock" class="btn" type="button">Khóa & Lưu</button>
@@ -95,6 +97,10 @@
                         </div>
                     </div>
                     <textarea id="diary-editor" class="diary-editor" placeholder="Viết cảm nghĩ của anh dành cho Ly..."></textarea>
+                    <div class="diary-list-bar">
+                        <button id="diary-load-list" class="btn" type="button">Tải danh sách</button>
+                    </div>
+                    <div id="diary-list" class="diary-list"></div>
                 </div>
             </div>
         </main>

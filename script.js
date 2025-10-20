@@ -16,10 +16,14 @@ const els = {
   openDiary: document.getElementById('open-diary'),
   diaryModal: document.getElementById('diary-modal'),
   diaryEditor: document.getElementById('diary-editor'),
+  diaryCode: document.getElementById('diary-code'),
+  diaryDate: document.getElementById('diary-date'),
   diaryPassword: document.getElementById('diary-password'),
   diaryUnlock: document.getElementById('diary-unlock'),
   diaryLock: document.getElementById('diary-lock'),
   diaryClose: document.getElementById('diary-close'),
+  diaryLoadList: document.getElementById('diary-load-list'),
+  diaryList: document.getElementById('diary-list'),
   formDate: document.getElementById('mem-date'),
   formTitle: document.getElementById('mem-title'),
   formPhoto: /** @type {HTMLInputElement} */ (document.getElementById('mem-photo')),
@@ -131,7 +135,7 @@ async function cloudInitIfAvailable() {
     const cfg = await import('./assets/firebase-config.js');
     if (!cfg?.firebaseConfig) return;
     const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js');
-    const { getFirestore, collection, getDocs, addDoc, serverTimestamp, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js');
+    const { getFirestore, collection, getDocs, addDoc, serverTimestamp, query, orderBy, where } = await import('https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js');
     let storageApi = null;
     try {
       storageApi = await import('https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js');
@@ -167,6 +171,14 @@ async function cloudInitIfAvailable() {
           }
         }
         await addDoc(collection(db, 'memories'), { date, title, desc, photoUrl, createdAt: serverTimestamp() });
+      },
+      async addDiary({ code, date, cipher }) {
+        await addDoc(collection(db, 'diaries'), { code, date, cipher, createdAt: serverTimestamp() });
+      },
+      async listDiariesByCode(code) {
+        const qy = query(collection(db, 'diaries'), where('code','==',code), orderBy('createdAt','desc'));
+        const snap = await getDocs(qy);
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
       },
     };
     els.cloudStatus && (els.cloudStatus.textContent = cloudinaryCfg ? 'Đồng bộ: Firestore + Cloudinary' : (st ? 'Đồng bộ: Firestore + Storage' : 'Đồng bộ: Firestore (không ảnh cloud)'));
@@ -473,6 +485,34 @@ window.addEventListener('DOMContentLoaded', async () => {
     const enc = await encryptDiary(text, pass);
     localStorage.setItem(DIARY_KEY, enc);
     showToast('Đã khóa & lưu nhật ký');
+    // Optional cloud save: need code and date
+    if (cloud && els.diaryCode.value) {
+      const date = els.diaryDate.value || new Date().toISOString().slice(0,10);
+      try { await cloud.addDiary({ code: els.diaryCode.value.trim(), date, cipher: enc }); showToast('Đã đồng bộ nhật ký'); } catch {}
+    }
+  });
+  // Load diary list by code
+  els.diaryLoadList?.addEventListener('click', async () => {
+    if (!cloud) { showToast('Chưa bật cloud'); return; }
+    const code = els.diaryCode.value.trim();
+    if (!code) { showToast('Nhập mã nhật ký'); return; }
+    try {
+      const entries = await cloud.listDiariesByCode(code);
+      els.diaryList.innerHTML = '';
+      for (const d of entries) {
+        const item = document.createElement('div');
+        item.className = 'diary-item';
+        item.textContent = `${d.date || ''} — ghi chú`;
+        item.addEventListener('click', async () => {
+          const pass = els.diaryPassword.value;
+          if (!pass) { showToast('Nhập mật khẩu để mở'); return; }
+          try { els.diaryEditor.value = await decryptDiary(d.cipher, pass); showToast('Đã mở từ cloud'); }
+          catch { showToast('Mật khẩu sai'); }
+        });
+        els.diaryList.appendChild(item);
+      }
+      if (!entries.length) showToast('Chưa có trang nào');
+    } catch { showToast('Không tải được danh sách'); }
   });
 });
 
