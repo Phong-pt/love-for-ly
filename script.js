@@ -99,6 +99,7 @@ function updateMotd() {
 
 // 6) Timeline with localStorage
 const STORAGE_KEY = 'love-for-ly:timeline';
+let cloud = null; // will hold Firebase helpers if available
 /** @typedef {{ id:string; date:string; title:string; desc:string; photoData?:string }} Memory */
 /** @returns {Memory[]} */
 function readMemories() {
@@ -108,8 +109,68 @@ function readMemories() {
 function writeMemories(data) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
-function renderTimeline() {
-  const data = readMemories().sort((a,b) => (a.date > b.date ? -1 : 1));
+async function cloudInitIfAvailable() {
+  // If assets/firebase-config.js exists and exports firebaseConfig, enable cloud sync
+  try {
+    const cfg = await import('./assets/firebase-config.js');
+    if (!cfg?.firebaseConfig) return;
+    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js');
+    const { getFirestore, collection, getDocs, addDoc, serverTimestamp, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js');
+    let storageApi = null;
+    try {
+      storageApi = await import('https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js');
+    } catch {}
+    // Optional Cloudinary config (free tier)
+    let cloudinaryCfg = null;
+    try { cloudinaryCfg = (await import('./assets/cloudinary-config.js')).cloudinaryConfig; } catch {}
+    const app = initializeApp(cfg.firebaseConfig);
+    const db = getFirestore(app);
+    const st = storageApi ? storageApi.getStorage(app) : null;
+    cloud = {
+      async listMemories() {
+        const q = query(collection(db, 'memories'), orderBy('createdAt', 'desc'));
+        const snap = await getDocs(q);
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      },
+      async addMemory({ date, title, desc, photoData }) {
+        let photoUrl = '';
+        if (photoData) {
+          if (cloudinaryCfg) {
+            // Upload to Cloudinary unsigned preset (often free tier)
+            const form = new FormData();
+            form.append('file', photoData);
+            form.append('upload_preset', cloudinaryCfg.uploadPreset);
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryCfg.cloudName}/upload`, { method: 'POST', body: form });
+            const json = await res.json();
+            photoUrl = json.secure_url || '';
+          } else if (st && storageApi) {
+            const key = `photos/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+            const r = storageApi.ref(st, key);
+            await storageApi.uploadString(r, photoData, 'data_url');
+            photoUrl = await storageApi.getDownloadURL(r);
+          }
+        }
+        await addDoc(collection(db, 'memories'), { date, title, desc, photoUrl, createdAt: serverTimestamp() });
+      },
+    };
+  } catch {
+    // No cloud config found; stay local-only
+  }
+}
+async function renderTimeline() {
+  const localData = readMemories();
+  let data = localData;
+  if (cloud) {
+    try {
+      const cloudItems = await cloud.listMemories();
+      // merge cloud and local (cloud wins for dedup based on title+date)
+      const map = new Map();
+      for (const m of cloudItems) map.set(`${m.date}|${m.title}`, { ...m, photoData: m.photoUrl });
+      for (const m of localData) if (!map.has(`${m.date}|${m.title}`)) map.set(`${m.date}|${m.title}`, m);
+      data = Array.from(map.values());
+    } catch {}
+  }
+  data = data.sort((a,b) => (a.date > b.date ? -1 : 1));
   els.timeline.innerHTML = '';
   for (const m of data) {
     const item = document.createElement('article');
@@ -150,23 +211,69 @@ els.form?.addEventListener('submit', async (e) => {
   const desc = els.formDesc.value.trim();
   let photoData = '';
   if (els.formPhoto.files && els.formPhoto.files[0]) {
-    photoData = await readFileAsDataUrl(els.formPhoto.files[0]);
+    photoData = await readAndCompressImage(els.formPhoto.files[0], { maxSize: 1024, quality: 0.7 });
   }
   if (!date || !title) return;
   const record = { id: crypto.randomUUID(), date, title, desc, photoData };
   const data = readMemories();
   data.push(record);
-  writeMemories(data);
+  try {
+    writeMemories(data);
+    showToast('Đã lưu kỷ niệm 💖');
+  } catch (err) {
+    showToast('Không lưu được: ảnh quá lớn hoặc bộ nhớ trình duyệt đầy. Hãy chọn ảnh nhỏ hơn.');
+    // revert push on failure
+    data.pop();
+  }
+  // Also attempt to sync to cloud
+  if (cloud) {
+    try { await cloud.addMemory(record); } catch { showToast('Không đồng bộ được lên cloud (tạm thời).'); }
+  }
   els.form.reset();
   renderTimeline();
 });
-function readFileAsDataUrl(file) {
+async function readAndCompressImage(file, { maxSize = 1024, quality = 0.8 } = {}) {
+  // If not an image, return empty
+  if (!file || !file.type.startsWith('image/')) return '';
+  const bitmap = await createImageBitmap(file).catch(() => null);
+  if (!bitmap) return await fileToDataUrl(file); // fallback
+  const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
+  const targetW = Math.round(bitmap.width * scale);
+  const targetH = Math.round(bitmap.height * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = targetW; canvas.height = targetH;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(bitmap, 0, 0, targetW, targetH);
+  const type = file.type.includes('png') ? 'image/png' : 'image/jpeg';
+  const dataUrl = canvas.toDataURL(type, quality);
+  try { bitmap.close && bitmap.close(); } catch {}
+  return dataUrl;
+}
+function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+// Toast notification
+function showToast(message) {
+  let host = document.getElementById('toast-host');
+  if (!host) { host = document.createElement('div'); host.id = 'toast-host'; host.style.position = 'fixed'; host.style.bottom = '16px'; host.style.left = '50%'; host.style.transform = 'translateX(-50%)'; host.style.zIndex = '100'; host.style.display = 'grid'; host.style.gap = '8px'; document.body.appendChild(host); }
+  const toast = document.createElement('div');
+  toast.textContent = message;
+  toast.style.background = '#ff3366';
+  toast.style.color = '#fff';
+  toast.style.padding = '10px 14px';
+  toast.style.borderRadius = '12px';
+  toast.style.boxShadow = '0 8px 20px rgba(0,0,0,0.2)';
+  toast.style.opacity = '0';
+  toast.style.transition = 'opacity .2s ease, transform .2s ease';
+  host.appendChild(toast);
+  requestAnimationFrame(() => { toast.style.opacity = '1'; toast.style.transform = 'translateY(-4px)'; });
+  setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(0)'; setTimeout(() => toast.remove(), 200); }, 2400);
 }
 
 // 7) Chatbot (rule-based)
@@ -291,6 +398,7 @@ titleSpan?.addEventListener('mouseleave', () => { titleSpan.style.textShadow = '
 
 // 12) Init all
 window.addEventListener('DOMContentLoaded', async () => {
+  await cloudInitIfAvailable();
   // Force-remove legacy special popup if any cached markup still exists
   const legacyPopup = document.getElementById('special-popup');
   if (legacyPopup) legacyPopup.remove();
