@@ -177,9 +177,15 @@ async function cloudInitIfAvailable() {
         await addDoc(collection(db, 'diaries'), { code, date, cipher, createdAt: serverTimestamp() });
       },
       async listDiariesByCode(code) {
-        const qy = query(collection(db, 'diaries'), where('code','==',code), orderBy('createdAt','desc'));
+        // Avoid composite index requirement: filter by code only, sort client-side
+        const qy = query(collection(db, 'diaries'), where('code','==',code));
         const snap = await getDocs(qy);
-        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        return rows.sort((a,b) => {
+          const ta = (a.createdAt && a.createdAt.toMillis) ? a.createdAt.toMillis() : new Date(a.date||0).getTime();
+          const tb = (b.createdAt && b.createdAt.toMillis) ? b.createdAt.toMillis() : new Date(b.date||0).getTime();
+          return tb - ta;
+        });
       },
     };
     els.cloudStatus && (els.cloudStatus.textContent = cloudinaryCfg ? 'Đồng bộ: Firestore + Cloudinary' : (st ? 'Đồng bộ: Firestore + Storage' : 'Đồng bộ: Firestore (không ảnh cloud)'));
