@@ -415,6 +415,22 @@ window.addEventListener('DOMContentLoaded', async () => {
   maybeSpecial();
   initThreeLily();
   els.cloudReload?.addEventListener('click', () => renderTimeline());
+  // If the header button isn't present (cache/deploy cũ), add một nút nổi
+  if (!els.cloudReload) {
+    const fab = document.createElement('button');
+    fab.id = 'cloud-reload-fab';
+    fab.textContent = 'Đồng bộ';
+    fab.className = 'btn';
+    fab.style.position = 'fixed';
+    fab.style.right = '16px';
+    fab.style.bottom = '84px';
+    fab.style.zIndex = '60';
+    document.body.appendChild(fab);
+    fab.addEventListener('click', async () => {
+      await renderTimeline();
+      showToast('Đã tải lại từ cloud');
+    });
+  }
 });
 
 
