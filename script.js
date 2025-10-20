@@ -20,6 +20,7 @@ const els = {
   chatForm: document.getElementById('chat-form'),
   chatInput: document.getElementById('chat-input'),
   heartLayer: document.getElementById('heart-layer'),
+  cloudStatus: document.getElementById('cloud-status'),
   specialPopup: document.getElementById('special-popup'),
   specialText: document.getElementById('special-text'),
   specialClose: document.getElementById('special-close'),
@@ -153,8 +154,10 @@ async function cloudInitIfAvailable() {
         await addDoc(collection(db, 'memories'), { date, title, desc, photoUrl, createdAt: serverTimestamp() });
       },
     };
+    els.cloudStatus && (els.cloudStatus.textContent = cloudinaryCfg ? 'Đồng bộ: Firestore + Cloudinary' : (st ? 'Đồng bộ: Firestore + Storage' : 'Đồng bộ: Firestore (không ảnh cloud)'));
   } catch {
     // No cloud config found; stay local-only
+    els.cloudStatus && (els.cloudStatus.textContent = 'Đồng bộ: localStorage');
   }
 }
 async function renderTimeline() {
