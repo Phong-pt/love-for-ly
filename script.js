@@ -449,12 +449,17 @@ window.addEventListener('DOMContentLoaded', async () => {
   maybeSpecial();
   initThreeLily();
   els.cloudReload?.addEventListener('click', () => renderTimeline());
-  els.chatVisibility?.addEventListener('click', () => {
-    const box = document.getElementById('chatbot');
-    if (!box) return;
-    const hidden = box.classList.toggle('hidden');
-    els.chatVisibility.textContent = hidden ? 'Hiện Chatbot' : 'Ẩn Chatbot';
-  });
+  // Chatbot visibility toggle uses the 'hidden' attribute to avoid CSS conflicts
+  const chatBox = document.getElementById('chatbot');
+  if (chatBox && els.chatVisibility) {
+    // init label
+    els.chatVisibility.textContent = chatBox.hasAttribute('hidden') ? 'Hiện Chatbot' : 'Ẩn Chatbot';
+    els.chatVisibility.addEventListener('click', () => {
+      const isHidden = chatBox.hasAttribute('hidden');
+      if (isHidden) chatBox.removeAttribute('hidden'); else chatBox.setAttribute('hidden', '');
+      els.chatVisibility.textContent = isHidden ? 'Ẩn Chatbot' : 'Hiện Chatbot';
+    });
+  }
   // If the header button isn't present (cache/deploy cũ), add một nút nổi
   if (!els.cloudReload) {
     const fab = document.createElement('button');
