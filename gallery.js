@@ -19,9 +19,15 @@ async function initCloud() {
     const db = getFirestore(app);
     cloud = {
       async list(code) {
-        const q = query(collection(db, 'album'), where('code','==',code), orderBy('createdAt','desc'));
+        // Avoid composite index: filter by code only, sort client-side
+        const q = query(collection(db, 'album'), where('code','==',code));
         const snap = await getDocs(q);
-        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        return rows.sort((a,b) => {
+          const ta = (a.createdAt && a.createdAt.toMillis) ? a.createdAt.toMillis() : new Date().getTime();
+          const tb = (b.createdAt && b.createdAt.toMillis) ? b.createdAt.toMillis() : new Date().getTime();
+          return tb - ta;
+        });
       },
       async add({ code, url }) {
         await addDoc(collection(db,'album'), { code, url, createdAt: serverTimestamp() });
